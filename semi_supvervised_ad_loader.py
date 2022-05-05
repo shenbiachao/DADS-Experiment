@@ -26,7 +26,19 @@ from torch.utils.data import Dataset as PytorchDataset
 
 ## Hyperparameter
 seed = 42
-FRACTION =  0.1 ## 10% black train data are labeled
+
+## 10% of TOTAL black train data are labeled
+## If number of black samples in training dataset is 50, 0.1 means 5 labeled black dataset is available in training set
+## the rest of the black dataset(45 out of 50) will be discarded（unless COMTAINATION_RATIO>0）.
+ANOMALIES_FRACTION =  0.1 
+
+## Labeled normalies to labeled anomalies ratio: 
+## Say 5 out of 50 labeled black samples in the training set, NORMALIES_RATIO=5 means 25 labeled normal samples will be in the dataset
+## NORMALIES_RATIO=0 means no labeled normal samples in the training dataset.
+NORMALIES_RATIO= 5
+
+## Proportion of unlabeled black sampleds in the unlabeled training dataset
+## If unlabeled training size = 100, COMTAINATION_RATIO=0.01 means 1 out of 100 is black sample.
 COMTAINATION_RATIO = 0.01
 
 
@@ -121,21 +133,21 @@ class TabularData(PytorchDataset):
 
     @staticmethod
     def semi_supervised_ad_sampling(
-        df,seed = 42, fraction = 0.1, comtaination_ratio = 0.01):
+        df,seed = 42, anomalies_fraction = 0.1, comtaination_ratio = 0.01):
 
         """
         PU Learning Setting for semi-supervised anomaly detection experiment
         
         对数据集按80/20 分train/test
-        对分好的train dataset里的黑标， 按fraction*black_label_size，当作labeled 数据(labeled数据只可能有黑标)
+        对分好的train dataset里的黑标， 按anomalies_fraction*black_label_size，当作labeled 数据(labeled数据只可能有黑标)
         对分好的train dataset里的白标， 添加一定比例的黑标做为unlabeled dataset
         最后的train_dataset是上两步的集合(labeled black + unlabeled white + unlabeled black(optional))
         test dataset 还是一开始分到的20%原始数据
         
         Arguments:
         ---------
-            fraction(float): 
-                按fraction*black_label_size，采样黑标当作labeled 数据
+            anomalies_fraction(float): 
+                按anomalies_fraction*black_label_size，采样黑标当作labeled 数据
             comtaination_ratio(float):
                 对unlabeled train dataset, 采样train dataset里白标数量*comtaination_ratio的黑标添加到unlabeled train dataset
                 e.g: train dataset 有100个白标and comtaination_ratio=0.05, 最后的unlabeled train dataset会是100白标+5黑标=105
@@ -164,20 +176,20 @@ class TabularData(PytorchDataset):
         train_df = pd.concat([X_train, y_train], axis=1)
         test_df = pd.concat([X_test, y_test], axis=1)
 
-        ## Step 2: Set up labeled positive label size with fraction hyperparameters
+        ## Step 2: Set up labeled positive label size with anomalies_fraction hyperparameters
         black_train_df = train_df.loc[train_df['label']==1]
         white_train_df = train_df.loc[train_df['label']==0]
 
         black_train_df_shuffled = black_train_df.sample(frac=1, random_state=seed)
         black_train_size = len(black_train_df_shuffled)
-        labeled_black_train_df = black_train_df_shuffled.iloc[:int(fraction*black_train_size)]
+        labeled_black_train_df = black_train_df_shuffled.iloc[:int(anomalies_fraction*black_train_size)]
 
         ## Step 3: For rest of the black data in the training set, 
         ## use comtaination_ratio hyperparameter to add into unlabeled training set
         ## Note comtaination_ratio cannot be larger than odds(如果原数据最多就10%黑的，那comtaination_ratio不可能大于10%)
 
         comtaination_ratio = min(comtaination_ratio, odds)
-        unlabeled_black_train_df = black_train_df_shuffled.iloc[int(fraction*black_train_size):]
+        unlabeled_black_train_df = black_train_df_shuffled.iloc[int(anomalies_fraction*black_train_size):]
         white_train_size = len(white_train_df)
         unlabeled_black_train_size = int(white_train_size * comtaination_ratio)
 
@@ -210,7 +222,7 @@ def test():
 
     ## Hyperparameter
     seed = 42
-    FRACTION =  0.1 ## 10% black train data are labeled
+    ANOMALIES_FRACTION =  0.1 ## 10% black train data are labeled
     COMTAINATION_RATIO = 0.01
 
     DATASET = "shuttle"
@@ -220,7 +232,7 @@ def test():
 
     ## Semi-supervised setting output
     train_df, test_df = TabularData.semi_supervised_ad_sampling(
-        df, seed = seed, fraction = FRACTION, comtaination_ratio = COMTAINATION_RATIO
+        df, seed = seed, anomalies_fraction = ANOMALIES_FRACTION, comtaination_ratio = COMTAINATION_RATIO
         )
 
 if __name__ == '__main__':
