@@ -165,7 +165,11 @@ class TabularData(PytorchDataset):
 
         """
 
+        import random
         from sklearn.model_selection import train_test_split
+
+        random.seed(seed)
+        np.random.seed(seed)
 
         ## check comtaination rate
         odds = df['label'].sum()/len(df)  ## 原始数据黑标浓度
@@ -174,11 +178,36 @@ class TabularData(PytorchDataset):
         X = df.drop(['label'],axis=1)
 
         ## Step 1: Stratified sampling
-        X_train, X_test, y_train, y_test = train_test_split(
-                X, y,stratify=y, test_size=0.2,random_state=seed)
+        ## May 05: Add validation split for hyperparameter tuning
+        ## By defaule 0.6,0.2,0.2
+        X_train, X_val_test, y_train, y_val_test = train_test_split(
+                X, y,stratify=y, test_size=0.4,random_state=seed)
+        X_val, X_test, y_val, y_test = train_test_split(
+                X_val_test, y_val_test,stratify=y_val_test, test_size=0.5,random_state=seed)
 
-        train_df = pd.concat([X_train, y_train], axis=1)
-        test_df = pd.concat([X_test, y_test], axis=1)
+
+        # Standardize data (per feature Z-normalization, i.e. zero-mean and unit variance)
+        from sklearn.preprocessing import StandardScaler, MinMaxScaler
+        scaler = StandardScaler().fit(X_train)
+        X_train_stand = pd.DataFrame(scaler.transform(X_train))
+        X_val_stand = pd.DataFrame(scaler.transform(X_val))
+        X_test_stand = pd.DataFrame(scaler.transform(X_test))
+
+
+        # Scale to range [0,1]
+        minmax_scaler = MinMaxScaler().fit(X_train_stand)
+        X_train_scaled = pd.DataFrame(minmax_scaler.transform(X_train_stand))
+        X_val_scaled = pd.DataFrame(minmax_scaler.transform(X_val_stand))
+        X_test_scaled = pd.DataFrame(minmax_scaler.transform(X_test_stand))
+
+
+        y_train.reset_index(inplace=True,drop=True)
+        y_val.reset_index(inplace=True,drop=True)
+        y_test.reset_index(inplace=True,drop=True)
+
+        train_df = pd.concat([X_train_scaled, y_train], axis=1)
+        val_df = pd.concat([X_val_scaled, y_val], axis=1)
+        test_df = pd.concat([X_test_scaled, y_test], axis=1)
 
         ## Step 2: Set up labeled positive label size with anomalies_fraction hyperparameters
         black_train_df = train_df.loc[train_df['label']==1]
@@ -228,7 +257,7 @@ class TabularData(PytorchDataset):
         train_df2.reset_index(inplace=True, drop=True)
         test_df.reset_index(inplace=True, drop=True)
 
-        return train_df2, test_df
+        return train_df2, val_df, test_df
 
     @classmethod
     def concat_dataset(cls, dataset1, dataset2):
@@ -251,7 +280,6 @@ def test():
     ANOMALIES_FRACTION =  0.1 ## 10% black train data are labeled
     COMTAINATION_RATIO = 0
     NORMALIES_RATIO= 5
-
 
     DATASET = "arrhythmia"
 
