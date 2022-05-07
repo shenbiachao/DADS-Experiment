@@ -109,7 +109,7 @@ class TabularData(PytorchDataset):
 
         """
 
-        if dataset_name in ['arrhythmia','annthyroid','cardio', 'shuttle','satimage2','satellite']:
+        if dataset_name in ['arrhythmia','annthyroid','cardio', 'shuttle','satimage2','satellite','thyroid']:
             df = pd.read_csv("./data/{}.csv".format(dataset_name))
 
             ## unify label class name
