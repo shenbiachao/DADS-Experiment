@@ -1,0 +1,17 @@
+# Here you can define credentials for different data sets and environment.
+
+# Here you can define training and inference configuration for training and inference pipeline.
+
+# Example:
+
+[DATA]
+DATASETS = ['arrhythmia','annthyroid','cardio','shuttle','satimage2','satellite','thyroid']
+# DATASETS = ['arrhythmia']
+
+SEEDS = [1,20,42,50,99,101,135,145,165,200]
+
+[SEMI_SUPERVISED_SETTING]
+ANOMALIES_FRACTION = [0.1]
+NORMALIES_RATIO = [0]
+COMTAINATION_RATIO = [0]
+

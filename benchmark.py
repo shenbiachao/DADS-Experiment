@@ -18,6 +18,7 @@ from datetime import datetime
 import pandas as pd
 
 
+from src.models.builder import BenchmarkBuilder
 from src.models.ssad import SSAD
 from semi_supvervised_ad_loader import TabularData
 
@@ -85,14 +86,28 @@ def baseline():
         df = ad_ds._dataset
 
         ## Semi-supervised setting
-        train_df, val_df, test_df = TabularData.semi_supervised_ad_sampling(
-            df, seed = seed, anomalies_fraction = anomalies_fraction
-            , normalies_ratio = normalies_ratio
-            , comtaination_ratio = comtaination_ratio
-            )
+        if 'multi' in dataset_name:
+            all_normal_classes = CONFIG['MULTI_CLASS_AD_SETTING']['NORMAL_CLASSES'][dataset_name]
+            known_anomaly_class = CONFIG['MULTI_CLASS_AD_SETTING']['KNOWN_ANOMALY_CLASS'][dataset_name]
+
+            train_df, val_df, test_df = TabularData.semi_supervised_multi_class_ad_sampling(
+                df, seed = seed, anomalies_fraction = anomalies_fraction
+                , normalies_ratio = normalies_ratio
+                , comtaination_ratio = comtaination_ratio
+                , all_normal_classes = all_normal_classes
+                , known_anomaly_class = known_anomaly_class
+                )
+
+        else:
+            train_df, val_df, test_df = TabularData.semi_supervised_ad_sampling(
+                df, seed = seed, anomalies_fraction = anomalies_fraction
+                , normalies_ratio = normalies_ratio
+                , comtaination_ratio = comtaination_ratio
+                )
 
         ## Build model
-        model = SSAD(CONFIG)
+        model = BenchmarkBuilder.build(MODEL_NAME, CONFIG, seed=seed)
+        # model = SSAD(CONFIG)
 
         ## Model training
         model.train(
