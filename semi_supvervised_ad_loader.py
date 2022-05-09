@@ -105,7 +105,7 @@ class TabularData(PytorchDataset):
     @classmethod
     def load(cls, dataset_name='arrhythmia',training=True):
         """
-        Load Anomaly Detection Benchmark datasets from ODPS label pool
+        Load Anomaly Detection Benchmark datasets
 
         """
 
@@ -115,8 +115,22 @@ class TabularData(PytorchDataset):
             ## unify label class name
             if 'label' not in df.columns and 'Class' in df.columns:
                 df.rename({"Class":"label"}, axis=1, inplace=True)
+        
+        elif dataset_name in ['multi_annthyroid','multi_cardio',
+            'multi_covertype','multi_har','multi_shuttle']:
 
+            df = pd.read_csv("./data/multi_class_ad/{}.csv".format(dataset_name.split('_')[-1]))
 
+            if dataset_name == 'multi_cardio':
+                df.drop(['CLASS'], axis=1, inplac=True)
+
+            ## unify label class name
+            if 'label' not in df.columns and 'Class' in df.columns:
+                df.rename({"Class":"label"}, axis=1, inplace=True)
+            if 'label' not in df.columns and 'NSP' in df.columns:
+                df.rename({"NSP":"label"}, axis=1, inplace=True)
+
+        
         return cls(dataset=df,
             dataset_name=dataset_name, numerical_feat_idx='', 
             categorical_feat_idx='',training=training)
@@ -219,9 +233,9 @@ class TabularData(PytorchDataset):
         black_train_size = len(black_train_df_shuffled)
         labeled_black_train_df = black_train_df_shuffled.iloc[:int(anomalies_fraction*black_train_size)]
 
-        ## 用DeepSAD&SSAD对semi-supervisedlabel的setting
-        ## labeled black samples标-1， labeled white samples标+1
-        ## unlabeled sample 标0
+        ## 用DeepSAD&SSAD对semi-supervised label的setting
+        ## labeled black samples标-1，labeled white samples标+1
+        ## unlabeled samples 标0
         labeled_black_train_df['label'] = -1
 
         if normalies_ratio > 0:
@@ -255,6 +269,7 @@ class TabularData(PytorchDataset):
         train_df2 = pd.concat([labeled_train_df, unlabeled_train_df])
 
         train_df2.reset_index(inplace=True, drop=True)
+        val_df.reset_index(inplace=True, drop=True)
         test_df.reset_index(inplace=True, drop=True)
 
         return train_df2, val_df, test_df
@@ -268,6 +283,156 @@ class TabularData(PytorchDataset):
 
 
         return cls(dataset=result_df)
+
+    @staticmethod
+    def semi_supervised_multi_class_ad_sampling(
+        df, known_anomaly_class, seed = 42, anomalies_fraction = 0.1, normalies_ratio=5,comtaination_ratio = 0.01,
+        all_normal_classes = []):
+
+        """
+        PU Learning Setting for semi-supervised multi-class anomaly detection experiment
+        
+        对数据集按80/20 分train/test
+        对分好的train dataset里的黑标， 按anomalies_fraction*black_label_size，当作labeled 数据(labeled数据只可能有黑标)
+        black_label_size是基于入参的known anomaly class
+        test dataset里的黑标是所有的anomaly class
+
+        对分好的train dataset里的白标， 添加一定比例的黑标(所有anomaly class都有可能)做为unlabeled dataset
+        最后的train_dataset是上两步的集合(labeled black + unlabeled white + unlabeled black(optional))
+        test dataset 还是一开始分到的20%原始数据
+        
+        Arguments:
+        ---------
+            known_anomaly_class(int):
+                训练数据集包含的anomaly 的类别
+            anomalies_fraction(float): 
+                按anomalies_fraction*black_label_size，采样黑标当作labeled 数据
+            comtaination_ratio(float):
+                对unlabeled train dataset, 采样train dataset里白标数量*comtaination_ratio的黑标添加到unlabeled train dataset
+                e.g: train dataset 有100个白标and comtaination_ratio=0.05, 最后的unlabeled train dataset会是100白标+5黑标=105
+                Note: comtaination_ratio超过原始数据黑标浓度话，会替换成原始黑标浓度
+            normalies_ratio(int):
+                Proportion of unlabeled black sampleds in the unlabeled training dataset
+                If unlabeled training size = 100, COMTAINATION_RATIO=0.01 means 1 out of 100 is black sample.
+            all_normal_classes(list):
+                normal classes labels in the dataset
+
+
+        returns:
+        --------
+            train_df: 按semi supervised AD setting采样后的train df
+            test_df: 原始数据的20% stratified split, by default training/test split is 20%
+
+
+        """
+
+        import random
+        from sklearn.model_selection import train_test_split
+
+        random.seed(seed)
+        np.random.seed(seed)
+
+        ## rename normal class labels
+        ## use label==0 to subset normal class latter
+        df['label'] = df['label'].apply(lambda x: 0 if x in all_normal_classes else x)
+
+        ## check comtaination rate
+        # odds = df['label'].sum()/len(df)  ## 原始数据黑标浓度
+        odds = 1 - len(df.loc[df['label']==0]) / len(df) ## 原始数据黑标浓度, 为 1-白标浓度
+
+        y = df[['label']]
+        X = df.drop(['label'],axis=1)
+
+        ## Step 1: Stratified sampling
+        ## May 05: Add validation split for hyperparameter tuning
+        ## By defaule 0.6,0.2,0.2
+        X_train, X_val_test, y_train, y_val_test = train_test_split(
+                X, y,stratify=y, test_size=0.4,random_state=seed)
+        X_val, X_test, y_val, y_test = train_test_split(
+                X_val_test, y_val_test,stratify=y_val_test, test_size=0.5,random_state=seed)
+
+        # Standardize data (per feature Z-normalization, i.e. zero-mean and unit variance)
+        from sklearn.preprocessing import StandardScaler, MinMaxScaler
+        scaler = StandardScaler().fit(X_train)
+        X_train_stand = pd.DataFrame(scaler.transform(X_train))
+        X_val_stand = pd.DataFrame(scaler.transform(X_val))
+        X_test_stand = pd.DataFrame(scaler.transform(X_test))
+
+        # Scale to range [0,1]
+        minmax_scaler = MinMaxScaler().fit(X_train_stand)
+        X_train_scaled = pd.DataFrame(minmax_scaler.transform(X_train_stand))
+        X_val_scaled = pd.DataFrame(minmax_scaler.transform(X_val_stand))
+        X_test_scaled = pd.DataFrame(minmax_scaler.transform(X_test_stand))
+
+        y_train.reset_index(inplace=True,drop=True)
+        y_val.reset_index(inplace=True,drop=True)
+        y_test.reset_index(inplace=True,drop=True)
+
+        train_df = pd.concat([X_train_scaled, y_train], axis=1)
+        val_df = pd.concat([X_val_scaled, y_val], axis=1)
+        test_df = pd.concat([X_test_scaled, y_test], axis=1)
+
+        ## Step 2: Set up labeled positive label size with anomalies_fraction hyperparameters
+        known_black_train_df = train_df.loc[train_df['label']==known_anomaly_class]
+        white_train_df = train_df.loc[train_df['label']==0]
+
+        black_train_df_shuffled = known_black_train_df.sample(frac=1, random_state=seed)
+        white_train_df_shuffled = white_train_df.sample(frac=1, random_state=seed)
+
+        black_train_size = len(black_train_df_shuffled)
+        labeled_black_train_df = black_train_df_shuffled.iloc[:int(anomalies_fraction*black_train_size)]
+
+        ## 用DeepSAD&SSAD对semi-supervised label的setting
+        ## labeled black samples标-1， labeled white samples标+1
+        ## unlabeled samples 标0
+
+        labeled_black_train_df['label'] = -1
+
+        if normalies_ratio > 0:
+            ## 假如labeled training黑样本=5，ratio=5, 则labeled white size 应该是25
+            labeled_white_size = int(anomalies_fraction*black_train_size * normalies_ratio)
+            labeled_white_train_df = white_train_df_shuffled.iloc[:labeled_white_size]
+            labeled_white_train_df['label'] = 1
+            unlabeled_white_train_df = white_train_df_shuffled.iloc[labeled_white_size:]
+            labeled_train_df = pd.concat([labeled_black_train_df, labeled_white_train_df])
+        else:
+            unlabeled_white_train_df = white_train_df_shuffled
+            labeled_train_df = labeled_black_train_df
+            
+        ## Step 3: For rest of the black data in the training set, 
+        ## use comtaination_ratio hyperparameter to add into unlabeled training set
+        ## Note comtaination_ratio cannot be larger than odds(如果原数据最多就10%黑的，那comtaination_ratio不可能大于10%)
+        ## 污染的黑标可以来自任何anomaly classes
+
+        comtaination_ratio = min(comtaination_ratio, odds)
+        all_black_train_df = train_df.loc[train_df['label']!=0]
+
+        unlabeled_black_train_df = all_black_train_df.drop(labeled_black_train_df.index, axis=0) ## exclude labeled anomalies
+        unlabeled_black_train_df_shuffled = unlabeled_black_train_df.sample(frac=1, random_state=seed)
+
+        white_train_size = len(white_train_df)
+        unlabeled_black_train_size = int(white_train_size * comtaination_ratio)
+        unlabeled_black_train_size = min(unlabeled_black_train_size, len(unlabeled_black_train_df_shuffled)) ## 确保不溢出
+
+        ## Add those into ublabeled data
+        unlabeled_black_train_df2 = unlabeled_black_train_df_shuffled.iloc[:unlabeled_black_train_size]
+        
+        ## Add unlabled black adata into unlabeld white train data
+        unlabeled_train_df = pd.concat([unlabeled_black_train_df2,unlabeled_white_train_df])
+        unlabeled_train_df['label'] = 0
+
+        ## Step 4: finally: concat labeled black training data and comtainnated unlabeled data as final train size
+        train_df2 = pd.concat([labeled_train_df, unlabeled_train_df])
+
+        train_df2.reset_index(inplace=True, drop=True)
+        val_df.reset_index(inplace=True, drop=True)
+        test_df.reset_index(inplace=True, drop=True)
+        
+        ## For multi-class evaluation, make multi-class label binary
+        val_df['label'] = val_df['label'].apply(lambda x: 0 if x ==0 else 1)
+        test_df['label'] = test_df['label'].apply(lambda x: 0 if x ==0 else 1)
+
+        return train_df2, val_df, test_df
 
 def test():
     """
