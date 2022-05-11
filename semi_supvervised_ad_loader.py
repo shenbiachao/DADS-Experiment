@@ -88,19 +88,42 @@ class TabularData(PytorchDataset):
         self.numerical_feat_idx = numerical_feat_idx
         self.categorical_feat_idx = categorical_feat_idx
         self.target_col_list = target_col_list
-
+        self.training = training
 
     def __len__(self):
         return self._dataset.shape[0]
 
     def __getitem__(self, idx):
-        pass
+        
+        if self.training: ## Training placeholder
+            if 'label' in self._dataset.columns:
+                X = self._dataset.iloc[idx].drop(['label']).values
+                y = self._dataset.iloc[idx]['label']
+
+                return X, y
+            else:
+                return self._dataset.iloc[idx], None
+        else:
+            if 'label' in self._dataset.columns:
+                X = self._dataset.iloc[idx].drop(['label']).values
+                y = self._dataset.iloc[idx]['label']
+
+                return X, y
+            else:
+                return self._dataset.iloc[idx], None
         
     def set_label(self, label = 0):
         if 'label' in self._dataset.columns:
             logger.info("Label will be overwritten to {}".format(label))
 
         self._dataset['label'] = label
+
+    @classmethod
+    def load_from_dataframe(cls, df,training=True):
+        """
+        Load from pd.Dataframe
+        """
+        return cls(dataset=df,training=training)
 
     @classmethod
     def load(cls, dataset_name='arrhythmia',training=True):
@@ -122,7 +145,7 @@ class TabularData(PytorchDataset):
             df = pd.read_csv("./data/multi_class_ad/{}.csv".format(dataset_name.split('_')[-1]))
 
             if dataset_name == 'multi_cardio':
-                df.drop(['CLASS'], axis=1, inplac=True)
+                df.drop(['CLASS'], axis=1, inplace=True)
 
             ## unify label class name
             if 'label' not in df.columns and 'Class' in df.columns:
