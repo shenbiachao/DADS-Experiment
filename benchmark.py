@@ -10,23 +10,25 @@ Apr 30: Semi-supervised anomaly detection experiment
 #                                 MODULE                                   #
 #------------------------------------------------------------------------------#
 
-
+import sys
 import glob
 import toml
 from datetime import datetime
 
 import pandas as pd
+from tqdm import tqdm
 
 
 from src.models.builder import BenchmarkBuilder
 from src.models.ssad import SSAD
-from semi_supvervised_ad_loader import TabularData
+# from src.datasets.semi_supervised_ad_loader import TabularData
+from semi_supervised_ad_loader import TabularData
 
 #------------------------------------------------------------------------------#
 #                                 PARAMETERS                                   #
 #------------------------------------------------------------------------------#
 
-MODEL_NAME = "ssad"
+MODEL_NAME = "supervised"
 
 CONFIG_LIST = glob.glob("./config/{}/*.toml".format(MODEL_NAME))
 CONFIG = toml.load(CONFIG_LIST)
@@ -76,7 +78,7 @@ def baseline():
     
     results = []
 
-    for config in configs:
+    for config in tqdm(configs):
 
         ## Unpack hyperparameters
         dataset_name, seed, anomalies_fraction, normalies_ratio, comtaination_ratio = config
@@ -106,20 +108,35 @@ def baseline():
                 )
 
         ## Build model
-        model = BenchmarkBuilder.build(MODEL_NAME, CONFIG, seed=seed)
+        model = BenchmarkBuilder.build(MODEL_NAME, CONFIG, seed=seed, dataset_name = dataset_name)
         # model = SSAD(CONFIG)
 
         ## Model training
-        model.train(
-            train_df = train_df,
-            val_df = val_df
-            )
+        if MODEL_NAME == 'deepSAD':
+            train_dataset = TabularData.load_from_dataframe(train_df,training=True)
+            test_dataset = TabularData.load_from_dataframe(test_df,training=False)
 
-        ## Model Evaluation
-        roc_auc, roc_pr = model.evaluate(test_df)
+            model.train(
+                train_dataset = train_dataset, config=CONFIG
+                )
 
-        results.append([dataset_name,seed,
-            anomalies_fraction, normalies_ratio, comtaination_ratio, roc_auc, roc_pr])
+            ## Model Evaluation
+            roc_auc, roc_pr = model.test(test_dataset)
+
+            results.append([dataset_name,seed,
+                anomalies_fraction, normalies_ratio, comtaination_ratio, roc_auc, roc_pr])
+
+        else:
+            model.train(
+                train_df = train_df,
+                val_df = val_df
+                )
+
+            ## Model Evaluation
+            roc_auc, roc_pr = model.evaluate(test_df)
+
+            results.append([dataset_name,seed,
+                anomalies_fraction, normalies_ratio, comtaination_ratio, roc_auc, roc_pr])
 
     ## Save results
     results_df = pd.DataFrame(results)
@@ -129,7 +146,7 @@ def baseline():
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
     results_df.to_csv(
-        "./results/{}_result.csv".format(current_time), index=False)
+        "./results/{}/{}_result.csv".format(MODEL_NAME,current_time), index=False)
 
     pass
 

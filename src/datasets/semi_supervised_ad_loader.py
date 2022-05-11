@@ -16,7 +16,7 @@ import pandas as pd
 from scipy.io import loadmat
 import argparse
 
-from __init__ import logger
+# from __init__ import logger
 from torch.utils.data import Dataset as PytorchDataset
 
 
@@ -114,7 +114,7 @@ class TabularData(PytorchDataset):
         
     def set_label(self, label = 0):
         if 'label' in self._dataset.columns:
-            logger.info("Label will be overwritten to {}".format(label))
+            print("Label will be overwritten to {}".format(label))
 
         self._dataset['label'] = label
 
@@ -483,8 +483,8 @@ def test():
 
     print(train_df['label'].value_counts())
 
-if __name__ == '__main__':
-    test()
+# if __name__ == '__main__':
+#     test()
 
 
 
