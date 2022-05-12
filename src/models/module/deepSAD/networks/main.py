@@ -65,6 +65,17 @@ def build_network(net_name, ae_net=None):
     if net_name == 'thyroid_mlp':
         net = MLP(x_dim=6, h_dims=[32, 16], rep_dim=4, bias=False)
 
+    if net_name == 'multi_covertype_mlp':
+        net = MLP(x_dim=55, h_dims=[32, 16], rep_dim=4, bias=False)
+    if net_name == 'multi_annthyroid_mlp':
+        net = MLP(x_dim=22, h_dims=[32, 16], rep_dim=4, bias=False)
+    if net_name == 'multi_cardio_mlp':
+        net = MLP(x_dim=35, h_dims=[32, 16], rep_dim=4, bias=False)
+    if net_name == 'multi_shuttle_mlp':
+        net = MLP(x_dim=10, h_dims=[32, 16], rep_dim=4, bias=False)
+    if net_name == 'multi_har_mlp':
+        net = MLP(x_dim=562, h_dims=[128,64], rep_dim=32, bias=False)
+
     if net_name == 'arrhythmia_DGM_M2':
         net = DeepGenerativeModel([274, 2, 32, [128, 64]])
 
