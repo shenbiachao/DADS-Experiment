@@ -22,6 +22,7 @@ warnings.filterwarnings("ignore")
 
 from .ssad import SSAD
 from .supervised import XGB
+from .DeepSAD import DeepSAD
 
 #------------------------------------------------------------------------------#
 #                                 Config                                    #
@@ -59,5 +60,15 @@ class BenchmarkBuilder(object):
         elif model_name == "supervised":
             seed = kwargs.get('seed')
             model  = XGB(config, seed=seed)
+        elif model_name == 'deepSAD':
+            seed = kwargs.get('seed')
+            dataset_name = kwargs.get('dataset_name')
+            model_name = dataset_name + "_mlp"
+
+            # model  = DeepSAD(config, model_name, dataset_name, seed=seed)
+
+            # Initialize DeepSAD model and set neural network phi
+            model = DeepSAD(config)
+            model.set_network(model_name)
 
         return model

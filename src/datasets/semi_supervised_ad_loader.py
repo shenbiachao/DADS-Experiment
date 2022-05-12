@@ -16,7 +16,7 @@ import pandas as pd
 from scipy.io import loadmat
 import argparse
 
-from __init__ import logger
+# from __init__ import logger
 from torch.utils.data import Dataset as PytorchDataset
 
 
@@ -114,7 +114,7 @@ class TabularData(PytorchDataset):
         
     def set_label(self, label = 0):
         if 'label' in self._dataset.columns:
-            logger.info("Label will be overwritten to {}".format(label))
+            print("Label will be overwritten to {}".format(label))
 
         self._dataset['label'] = label
 
@@ -254,7 +254,9 @@ class TabularData(PytorchDataset):
         white_train_df_shuffled = white_train_df.sample(frac=1, random_state=seed)
 
         black_train_size = len(black_train_df_shuffled)
-        labeled_black_train_df = black_train_df_shuffled.iloc[:int(anomalies_fraction*black_train_size)]
+        labeled_black_sample_size = int(anomalies_fraction*black_train_size)
+        labeled_black_sample_size = max(1, labeled_black_sample_size) ## 最少都需要有一个labeled anomalies
+        labeled_black_train_df = black_train_df_shuffled.iloc[:labeled_black_sample_size]
 
         ## 用DeepSAD&SSAD对semi-supervised label的setting
         ## labeled black samples标-1，labeled white samples标+1
@@ -263,7 +265,7 @@ class TabularData(PytorchDataset):
 
         if normalies_ratio > 0:
             ## 假如labeled training黑样本=5，ratio=5, 则labeled white size 应该是25
-            labeled_white_size = int(anomalies_fraction*black_train_size * normalies_ratio)
+            labeled_white_size = int(labeled_black_sample_size* normalies_ratio)
             labeled_white_train_df = white_train_df_shuffled.iloc[:labeled_white_size]
             labeled_white_train_df['label'] = 1
             unlabeled_white_train_df = white_train_df_shuffled.iloc[labeled_white_size:]
@@ -277,7 +279,7 @@ class TabularData(PytorchDataset):
         ## Note comtaination_ratio cannot be larger than odds(如果原数据最多就10%黑的，那comtaination_ratio不可能大于10%)
 
         comtaination_ratio = min(comtaination_ratio, odds)
-        unlabeled_black_train_df = black_train_df_shuffled.iloc[int(anomalies_fraction*black_train_size):]
+        unlabeled_black_train_df = black_train_df_shuffled.iloc[labeled_black_sample_size:]
         white_train_size = len(white_train_df)
         unlabeled_black_train_size = int(white_train_size * comtaination_ratio)
 
@@ -403,7 +405,9 @@ class TabularData(PytorchDataset):
         white_train_df_shuffled = white_train_df.sample(frac=1, random_state=seed)
 
         black_train_size = len(black_train_df_shuffled)
-        labeled_black_train_df = black_train_df_shuffled.iloc[:int(anomalies_fraction*black_train_size)]
+        labeled_black_sample_size = int(anomalies_fraction*black_train_size)
+        labeled_black_sample_size = max(1, labeled_black_sample_size) ## 最少都需要有一个labeled anomalies
+        labeled_black_train_df = black_train_df_shuffled.iloc[:labeled_black_sample_size]
 
         ## 用DeepSAD&SSAD对semi-supervised label的setting
         ## labeled black samples标-1， labeled white samples标+1
@@ -413,7 +417,7 @@ class TabularData(PytorchDataset):
 
         if normalies_ratio > 0:
             ## 假如labeled training黑样本=5，ratio=5, 则labeled white size 应该是25
-            labeled_white_size = int(anomalies_fraction*black_train_size * normalies_ratio)
+            labeled_white_size = int(labeled_black_sample_size * normalies_ratio)
             labeled_white_train_df = white_train_df_shuffled.iloc[:labeled_white_size]
             labeled_white_train_df['label'] = 1
             unlabeled_white_train_df = white_train_df_shuffled.iloc[labeled_white_size:]
@@ -483,8 +487,8 @@ def test():
 
     print(train_df['label'].value_counts())
 
-if __name__ == '__main__':
-    test()
+# if __name__ == '__main__':
+#     test()
 
 
 

@@ -1,0 +1,29 @@
+# Here you can define credentials for different data sets and environment.
+
+# Here you can define training and inference configuration for training and inference pipeline.
+
+# Example:
+
+[DATA]
+# DATASETS = ['arrhythmia','annthyroid','cardio','shuttle','satimage2','satellite','thyroid']
+# DATASETS = ['arrhythmia','annthyroid','cardio','satimage2','satellite','thyroid']
+# DATASETS = ['multi_annthyroid']
+DATASETS = ['arrhythmia']
+
+
+
+SEEDS = [1,20,42,50,99,101,135,145,165,200]
+
+[SEMI_SUPERVISED_SETTING]
+# ANOMALIES_FRACTION = [0.1,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
+# NORMALIES_RATIO = [0,2,4,6,8,10]
+# COMTAINATION_RATIO = [0.0, 0.02, 0.04, 0.06, 0.08, 0.1]
+ANOMALIES_FRACTION = [0.1]
+NORMALIES_RATIO = [0]
+COMTAINATION_RATIO = [0.0]
+
+[MULTI_CLASS_AD_SETTING]
+KNOWN_ANOMALY_CLASS = {"multi_annthyroid"=2, "multi_covertype"=4, "multi_cardio"=2, "multi_shuttle"=3, "multi_har"=2} 
+# ALL_CLASSES = {'multi_annthyroid'=[3, 1, 2], 'multi_covertype'=[2, 4, 6], 'multi_cardio'=[1, 2, 3], 'multi_shuttle'=[1, 2, 3, 4, 5, 6, 7], 'multi_har'=[1, 2, 3, 4, 5, 6]}
+NORMAL_CLASSES = {'multi_annthyroid'=[3], 'multi_covertype'=[2], 'multi_cardio'=[1], 'multi_shuttle'=[1], 'multi_har'=[1, 4, 5, 6]}
+
