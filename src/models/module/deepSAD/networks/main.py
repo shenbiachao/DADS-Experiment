@@ -134,5 +134,15 @@ def build_autoencoder(net_name):
 
     if net_name == 'thyroid_mlp':
         ae_net = MLP_Autoencoder(x_dim=6, h_dims=[32, 16], rep_dim=4, bias=False)
+    if net_name == 'multi_covertype_mlp':
+        ae_net = MLP_Autoencoder(x_dim=55, h_dims=[32, 16], rep_dim=4, bias=False)
+    if net_name == 'multi_annthyroid_mlp':
+        ae_net = MLP_Autoencoder(x_dim=22, h_dims=[32, 16], rep_dim=4, bias=False)
+    if net_name == 'multi_cardio_mlp':
+        ae_net = MLP_Autoencoder(x_dim=35, h_dims=[32, 16], rep_dim=4, bias=False)
+    if net_name == 'multi_shuttle_mlp':
+        ae_net = MLP_Autoencoder(x_dim=10, h_dims=[32, 16], rep_dim=4, bias=False)
+    if net_name == 'multi_har_mlp':
+        ae_net = MLP_Autoencoder(x_dim=562, h_dims=[128,64], rep_dim=32, bias=False)
 
     return ae_net
