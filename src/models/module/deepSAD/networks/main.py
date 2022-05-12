@@ -15,7 +15,10 @@ def build_network(net_name, ae_net=None):
                             'arrhythmia_mlp', 'cardio_mlp', 'satellite_mlp', 'satimage-2_mlp', 'shuttle_mlp',
                             'thyroid_mlp',
                             'arrhythmia_DGM_M2', 'cardio_DGM_M2', 'satellite_DGM_M2', 'satimage-2_DGM_M2',
-                            'shuttle_DGM_M2', 'thyroid_DGM_M2')
+                            'shuttle_DGM_M2', 'thyroid_DGM_M2',
+                            'multi_covertype_mlp','multi_annthyroid_mlp','multi_cardio_mlp','multi_shuttle_mlp'
+                            ,'multi_har_mlp'
+                            )
     assert net_name in implemented_networks
 
     net = None
