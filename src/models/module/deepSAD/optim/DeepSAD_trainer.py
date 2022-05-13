@@ -97,9 +97,11 @@ class DeepSADTrainer(BaseTrainer):
                     loss = torch.mean(losses)
                 else:
                     ## May 10: Apply HSC loss from https://github.com/lukasruff/Classification-AD/blob/master/src/optim/classifier_trainer.py
+                    ## May 12 DW: 添加labeled 白样本监督信号到loss里
                     dist = torch.sqrt(torch.sum((outputs - self.c) ** 2, dim=1)+1) - 1
                     scores = 1 - torch.exp(-dist)
-                    losses = torch.where(semi_targets == 0, dist, -torch.log(scores + self.eps))
+                    # losses = torch.where(semi_targets == 0, dist, -torch.log(scores + self.eps))
+                    losses = torch.where(semi_targets == 0, dist, semi_targets.float() * torch.log(scores + self.eps))
                     loss = torch.mean(losses)
                     # dists = torch.sqrt(torch.norm((outputs-self.c), p=2, dim=1) ** 2 + 1) - 1
 
