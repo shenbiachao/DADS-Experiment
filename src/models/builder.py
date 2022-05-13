@@ -23,6 +23,7 @@ warnings.filterwarnings("ignore")
 from .ssad import SSAD
 from .supervised import XGB
 from .DeepSAD import DeepSAD
+from .unsupervised import UnsupervisedModel
 
 #------------------------------------------------------------------------------#
 #                                 Config                                    #
@@ -70,5 +71,9 @@ class BenchmarkBuilder(object):
             # Initialize DeepSAD model and set neural network phi
             model = DeepSAD(config)
             model.set_network(model_name)
+        elif model_name == 'unsupervised':
+            seed = kwargs.get('seed')
+            model = UnsupervisedModel(config,seed=seed)
+
 
         return model
