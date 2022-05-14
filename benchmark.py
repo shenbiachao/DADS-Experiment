@@ -21,14 +21,14 @@ from tqdm import tqdm
 
 from src.models.builder import BenchmarkBuilder
 from src.models.ssad import SSAD
-# from src.datasets.semi_supervised_ad_loader import TabularData
-from semi_supervised_ad_loader import TabularData
+from src.datasets.semi_supervised_ad_loader import TabularData
+# from semi_supervised_ad_loader import TabularData
 
 #------------------------------------------------------------------------------#
 #                                 PARAMETERS                                   #
 #------------------------------------------------------------------------------#
 
-MODEL_NAME = "supervised"
+MODEL_NAME = "unsupervised"
 
 CONFIG_LIST = glob.glob("./config/{}/*.toml".format(MODEL_NAME))
 CONFIG = toml.load(CONFIG_LIST)
@@ -129,7 +129,8 @@ def baseline():
         else:
             model.train(
                 train_df = train_df,
-                val_df = val_df
+                val_df = val_df,
+                config=CONFIG
                 )
 
             ## Model Evaluation
