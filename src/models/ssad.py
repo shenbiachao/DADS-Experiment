@@ -39,7 +39,7 @@ class SSAD(object):
         self.best_model = None
         self.best_svs = None
 
-    def train(self, train_df: pd.DataFrame, val_df: pd.DataFrame = None):
+    def train(self, train_df: pd.DataFrame, val_df: pd.DataFrame = None, **kwargs):
         """Trains the SSAD model on the training data."""
 
         X_train = train_df.drop(['label'], axis=1).values

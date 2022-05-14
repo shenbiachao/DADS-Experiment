@@ -43,7 +43,7 @@ class UnsupervisedModel(object):
 
         self.model = model
 
-    def train(self, train_df: pd.DataFrame, val_df: pd.DataFrame = None):
+    def train(self, train_df: pd.DataFrame, val_df: pd.DataFrame = None,**kwargs):
         """Trains the SSAD model on the training data."""
 
         if 'label' in train_df.columns:
