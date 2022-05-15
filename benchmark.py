@@ -28,7 +28,7 @@ from src.datasets.semi_supervised_ad_loader import TabularData
 #                                 PARAMETERS                                   #
 #------------------------------------------------------------------------------#
 
-MODEL_NAME = "unsupervised"
+MODEL_NAME = "devnet"
 
 CONFIG_LIST = glob.glob("./config/{}/*.toml".format(MODEL_NAME))
 CONFIG = toml.load(CONFIG_LIST)
@@ -121,7 +121,7 @@ def baseline():
                 )
 
             ## Model Evaluation
-            roc_auc, roc_pr = model.test(test_dataset)
+            roc_auc, roc_pr = model.evaluate(test_dataset)
 
             results.append([dataset_name,seed,
                 anomalies_fraction, normalies_ratio, comtaination_ratio, roc_auc, roc_pr])

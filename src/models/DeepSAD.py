@@ -92,7 +92,7 @@ class DeepSAD(object):
         self.results['train_time'] = self.trainer.train_time
         self.c = self.trainer.c.cpu().data.numpy().tolist()  # get as list
 
-    def test(self, test_dataset, device: str = 'cuda', n_jobs_dataloader: int = 0):
+    def evaluate(self, test_dataset, device: str = 'cuda', n_jobs_dataloader: int = 0):
         """Tests the Deep SAD model on the test data."""
 
         if self.trainer is None:
