@@ -28,7 +28,7 @@ from src.datasets.semi_supervised_ad_loader import TabularData
 #                                 PARAMETERS                                   #
 #------------------------------------------------------------------------------#
 
-MODEL_NAME = "unsupervised"
+MODEL_NAME = "devnet"
 
 CONFIG_LIST = glob.glob("./config/{}/*.toml".format(MODEL_NAME))
 CONFIG = toml.load(CONFIG_LIST)
@@ -121,10 +121,18 @@ def baseline():
                 )
 
             ## Model Evaluation
-            roc_auc, roc_pr = model.test(test_dataset)
+            roc_auc, roc_pr = model.evaluate(test_dataset)
 
             results.append([dataset_name,seed,
                 anomalies_fraction, normalies_ratio, comtaination_ratio, roc_auc, roc_pr])
+
+        elif MODEL_NAME == "vime":
+
+            roc_auc, roc_pr = model.train(train_df = train_df, val_df = test_df, config=CONFIG)
+            results.append([dataset_name,seed,
+                anomalies_fraction, normalies_ratio, comtaination_ratio, roc_auc, roc_pr])
+
+            del model
 
         else:
             model.train(
@@ -147,7 +155,9 @@ def baseline():
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
     results_df.to_csv(
-        "./results/{}/{}_result.csv".format(MODEL_NAME,current_time), index=False)
+        # "./results/{}/{}_setting21_result.csv".format(MODEL_NAME,current_time), index=False)
+        # "./results/{}/{}_setting12_rerun_result.csv".format(MODEL_NAME,current_time), index=False)
+        "./results/{}/{}_setting22_multi_shuttle_rerun_result.csv".format(MODEL_NAME,current_time), index=False)
 
     pass
 

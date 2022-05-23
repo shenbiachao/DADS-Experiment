@@ -25,6 +25,7 @@ from .supervised import XGB
 from .DeepSAD import DeepSAD
 from .unsupervised import UnsupervisedModel
 from .devnet import DevNet
+from .vime import VIME
 
 #------------------------------------------------------------------------------#
 #                                 Config                                    #
@@ -77,6 +78,7 @@ class BenchmarkBuilder(object):
             seed = kwargs.get('seed')
             model = DevNet(config,seed=seed)
 
-
+        elif model_name == 'vime':
+            model = VIME(config)
 
         return model

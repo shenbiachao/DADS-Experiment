@@ -44,7 +44,7 @@ class UnsupervisedModel(object):
         self.model = model
 
     def train(self, train_df: pd.DataFrame, val_df: pd.DataFrame = None,**kwargs):
-        """Trains the SSAD model on the training data."""
+        """Trains the unsupervised model on the training data."""
 
         if 'label' in train_df.columns:
 
@@ -57,7 +57,7 @@ class UnsupervisedModel(object):
         self.model.fit(X_train)
 
     def evaluate(self, test_df: pd.DataFrame):
-        """Tests the SSAD model on the test data."""
+        """Tests the unsupervised model on the test data."""
 
         from sklearn.metrics import roc_auc_score, precision_recall_curve, auc
 

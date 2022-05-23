@@ -46,10 +46,8 @@ class XGB(object):
 
         if 1 in train_df['label'].unique():
             train_df['label'].replace({1:0}, inplace=True)   ## replace labeled normal class to 0
-            # val_df['label'].replace({1:0}, inplace=True) 
         if -1 in train_df['label'].unique():
             train_df['label'].replace({-1:1}, inplace=True)   ## replace labeled anomaly class to 1
-            # val_df['label'].replace({-1:1}, inplace=True) 
 
         X_train = train_df.drop(['label'], axis=1).values
         y_train = train_df['label'].values
@@ -80,8 +78,8 @@ class XGB(object):
 
         from sklearn.metrics import roc_auc_score, precision_recall_curve, auc
 
-        X_test = test_df.drop(['label'], axis=1)
-        y_test = test_df['label']
+        X_test = test_df.drop(['label'], axis=1).values
+        y_test = test_df['label'].values
 
         # Test on test set
         scores = self.model.predict_proba(X_test)[:,1]  # outlier labels (0 or 1)
