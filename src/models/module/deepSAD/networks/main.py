@@ -13,7 +13,7 @@ def build_network(net_name, ae_net=None):
                             'fmnist_LeNet', 'fmnist_DGM_M2', 'fmnist_DGM_M1M2',
                             'cifar10_LeNet', 'cifar10_DGM_M2', 'cifar10_DGM_M1M2',
                             'arrhythmia_mlp', 'cardio_mlp', 'satellite_mlp', 'satimage-2_mlp', 'shuttle_mlp',
-                            'thyroid_mlp',
+                            'thyroid_mlp','annthyroid_mlp',
                             'arrhythmia_DGM_M2', 'cardio_DGM_M2', 'satellite_DGM_M2', 'satimage-2_DGM_M2',
                             'shuttle_DGM_M2', 'thyroid_DGM_M2',
                             'multi_covertype_mlp','multi_annthyroid_mlp','multi_cardio_mlp','multi_shuttle_mlp'
@@ -52,6 +52,9 @@ def build_network(net_name, ae_net=None):
 
     if net_name == 'arrhythmia_mlp':
         net = MLP(x_dim=274, h_dims=[128, 64], rep_dim=32, bias=False)
+
+    if net_name == 'annthyroid_mlp':
+        net = MLP(x_dim=6, h_dims=[128, 64], rep_dim=32, bias=False)
 
     if net_name == 'cardio_mlp':
         net = MLP(x_dim=21, h_dims=[32, 16], rep_dim=8, bias=False)
@@ -107,7 +110,7 @@ def build_autoencoder(net_name):
                             'fmnist_LeNet', 'fmnist_DGM_M1M2',
                             'cifar10_LeNet', 'cifar10_DGM_M1M2',
                             'arrhythmia_mlp', 'cardio_mlp', 'satellite_mlp', 'satimage-2_mlp', 'shuttle_mlp',
-                            'thyroid_mlp',
+                            'thyroid_mlp','annthyroid_mlp',
                             'multi_covertype_mlp','multi_annthyroid_mlp','multi_cardio_mlp','multi_shuttle_mlp'
                             ,'multi_har_mlp'
                             )
@@ -148,6 +151,9 @@ def build_autoencoder(net_name):
 
     if net_name == 'shuttle_mlp':
         ae_net = MLP_Autoencoder(x_dim=9, h_dims=[32, 16], rep_dim=8, bias=False)
+
+    if net_name == 'annthyroid_mlp':
+        ae_net = MLP_Autoencoder(x_dim=6, h_dims=[128, 64], rep_dim=32, bias=False)
 
     if net_name == 'thyroid_mlp':
         ae_net = MLP_Autoencoder(x_dim=6, h_dims=[32, 16], rep_dim=4, bias=False)
